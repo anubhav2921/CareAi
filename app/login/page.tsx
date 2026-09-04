@@ -24,8 +24,8 @@ export default function LoginPage() {
     try {
       await apiClient.login(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Failed to login");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to login");
     } finally {
       setLoading(false);
     }

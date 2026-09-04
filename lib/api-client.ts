@@ -37,7 +37,7 @@ export const apiClient = {
     throw new Error('Invalid credentials');
   },
 
-  uploadReport: async (file: File) => {
+  uploadReport: async (_file: File) => {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const reportId = 'rep_' + Math.random().toString(36).substring(7);
     

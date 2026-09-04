@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText, HeartPulse, Activity, ShieldCheck, Search, Bell } from "lucide-react";
+import { ArrowRight, FileText, Activity, ShieldCheck, Search, Bell } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -9,8 +9,9 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <HeartPulse className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-bold tracking-tight text-blue-900">MediAI</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/favicon.ico" alt="CareAI Logo" className="h-6 w-6" />
+            <span className="text-xl font-bold tracking-tight text-blue-900">CareAI</span>
           </div>
           <nav className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
             <Link href="#features" className="hover:text-blue-600 transition-colors">Features</Link>
@@ -60,7 +61,7 @@ export default function LandingPage() {
               <h2 className="text-3xl font-bold tracking-tight text-slate-900">Comprehensive Health Intelligence</h2>
               <p className="text-slate-500 mt-4 max-w-2xl mx-auto">Everything you need to understand and act on your medical data.</p>
             </div>
-            
+
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 { icon: FileText, title: "AI Report Explanation", desc: "Complex medical jargon translated into simple, humanized language." },
@@ -84,8 +85,8 @@ export default function LandingPage() {
             <ShieldCheck className="h-16 w-16 text-blue-600 mx-auto mb-6" />
             <h2 className="text-3xl font-bold text-slate-900 mb-6">Your Safety is Our Priority</h2>
             <p className="text-lg text-slate-700 leading-relaxed bg-white p-8 rounded-2xl border border-blue-100 shadow-sm">
-              MediAI provides informational explanations designed to help you understand your health data. 
-              <strong> We do not provide medical diagnoses, prescribe treatments, or replace qualified healthcare professionals. </strong> 
+              MediAI provides informational explanations designed to help you understand your health data.
+              <strong> We do not provide medical diagnoses, prescribe treatments, or replace qualified healthcare professionals. </strong>
               Always consult with your doctor before making any medical decisions.
             </p>
           </div>
@@ -96,8 +97,9 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-slate-200 py-12">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <HeartPulse className="h-5 w-5 text-blue-600" />
-            <span className="font-semibold text-slate-900">MediAI</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/favicon.ico" alt="CareAI Logo" className="h-6 w-6" />
+            <span className="text-xl font-bold tracking-tight text-blue-900">CareAI</span>
           </div>
           <p className="text-slate-500 text-sm">© {new Date().getFullYear()} MediAI. All rights reserved.</p>
         </div>

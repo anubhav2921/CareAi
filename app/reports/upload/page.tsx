@@ -25,7 +25,7 @@ export default function UploadReportPage() {
     try {
       const response = await apiClient.uploadReport(file);
       router.push(`/reports/${response.reportId}`);
-    } catch (err: any) {
+    } catch (err) {
       setError("Failed to upload report. Please try again.");
       setLoading(false);
     }
