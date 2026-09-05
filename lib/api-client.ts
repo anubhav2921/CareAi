@@ -22,6 +22,7 @@ export interface Report {
     significance: string;
     isAbnormal: boolean;
   }>;
+  isGuest?: boolean;
 }
 
 // Mock database
@@ -46,6 +47,7 @@ export const apiClient = {
       id: reportId,
       status: 'processing',
       uploadDate: new Date().toISOString(),
+      isGuest: false,
       progress: {
         uploaded: true,
         identified: false,
@@ -60,6 +62,39 @@ export const apiClient = {
     apiClient._simulateProcessing(reportId);
 
     return { reportId, status: 'processing' };
+  },
+
+  uploadGuestReport: async (_file: File) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const reportId = 'guest_' + Math.random().toString(36).substring(7);
+    
+    mockReports[reportId] = {
+      id: reportId,
+      status: 'processing',
+      uploadDate: new Date().toISOString(),
+      isGuest: true,
+      progress: {
+        uploaded: true,
+        identified: false,
+        extracted: false,
+        analyzed: false,
+        explanationGenerated: false,
+        audioGenerated: false,
+      },
+    };
+
+    apiClient._simulateProcessing(reportId);
+    return { reportId, status: 'processing' };
+  },
+
+  getGuestReport: async (id: string): Promise<Report> => {
+    return apiClient.getReport(id);
+  },
+
+  downloadReportPDF: async (id: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Simulate returning a Blob or URL
+    return { success: true, url: `/api/mock-download/${id}.pdf` };
   },
 
   getReport: async (id: string): Promise<Report> => {

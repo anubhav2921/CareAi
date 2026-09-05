@@ -22,7 +22,7 @@ export default function LandingPage() {
             <Link href="/login">
               <Button variant="ghost" className="text-slate-600">Sign in</Button>
             </Link>
-            <Link href="/login">
+            <Link href="/upload">
               <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
             </Link>
           </div>
@@ -40,7 +40,7 @@ export default function LandingPage() {
               Upload your medical report and get a clear, easy-to-understand explanation powered by AI. Make informed decisions about your health.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/login">
+              <Link href="/upload">
                 <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-14 px-8 text-lg rounded-full">
                   Upload a Report <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
