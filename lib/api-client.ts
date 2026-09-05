@@ -1,10 +1,59 @@
-export type ReportStatus = 'processing' | 'completed' | 'error';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+export type ReportStatus = 'uploaded' | 'queued' | 'processing' | 'completed' | 'failed';
+export type Language = 'en' | 'hi' | 'hinglish';
+
+export interface LocalizedString {
+  en: string;
+  hi: string;
+  hinglish: string;
+}
+
+export interface PatientInfo {
+  name: string | null;
+  age: number | null;
+  sex: string | null;
+  sample_date: string | null;
+}
+
+export interface ReportMeta {
+  type: string;
+  title: string;
+}
+
+export interface ReportSummary {
+  overview: LocalizedString;
+  within_range: number;
+  above_range: number;
+  below_range: number;
+  unknown: number;
+}
+
+export interface ReportParameter {
+  name: string;
+  value: number | null;
+  unit: string;
+  reference_range: string;
+  status: 'within_range' | 'above_range' | 'below_range' | 'unknown';
+  explanation: LocalizedString;
+}
+
+export interface ReportResult {
+  patient: PatientInfo;
+  report: ReportMeta;
+  summary: ReportSummary;
+  parameters: ReportParameter[];
+  attention_items: string[];
+  doctor_questions: { en: string[]; hi: string[]; hinglish: string[] };
+  limitations: string[];
+}
 
 export interface Report {
   id: string;
   status: ReportStatus;
-  type?: 'CBC' | 'RADIOLOGY' | 'PRESCRIPTION' | 'UNKNOWN';
+  type?: string;
   uploadDate: string;
+  processingError?: string;
   progress?: {
     uploaded: boolean;
     identified: boolean;
@@ -13,24 +62,13 @@ export interface Report {
     explanationGenerated: boolean;
     audioGenerated: boolean;
   };
-  summary?: string;
-  findings?: Array<{
-    name: string;
-    result: string;
-    referenceRange: string;
-    meaning: string;
-    significance: string;
-    isAbnormal: boolean;
-  }>;
+  result?: ReportResult;
   isGuest?: boolean;
 }
 
-// Mock database
-const mockReports: Record<string, Report> = {};
-
 export const apiClient = {
   login: async (email: string, password: string) => {
-    // Simulate network delay
+    // Keep mock login for now until auth is implemented
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (email === 'test@example.com' && password === 'password') {
       return { token: 'mock-jwt-token' };
@@ -38,53 +76,96 @@ export const apiClient = {
     throw new Error('Invalid credentials');
   },
 
-  uploadReport: async (_file: File) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const reportId = 'rep_' + Math.random().toString(36).substring(7);
-    
-    // Initialize mock report
-    mockReports[reportId] = {
-      id: reportId,
-      status: 'processing',
-      uploadDate: new Date().toISOString(),
-      isGuest: false,
-      progress: {
-        uploaded: true,
-        identified: false,
-        extracted: false,
-        analyzed: false,
-        explanationGenerated: false,
-        audioGenerated: false,
-      },
-    };
+  uploadReport: async (file: File, guestSessionId?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (guestSessionId) {
+      formData.append('guest_session_id', guestSessionId);
+    }
 
-    // Simulate async background processing
-    apiClient._simulateProcessing(reportId);
+    let response;
+    try {
+      response = await fetch(`${API_BASE}/reports/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (err: unknown) {
+      console.error('[Upload] Fetch error:', err);
+      throw new Error('Unable to connect to the analysis service. Please make sure the server is running and try again.');
+    }
 
-    return { reportId, status: 'processing' };
+    if (!response.ok) {
+      let errorMsg = `Unable to analyze this report right now. Please try again. (Status: ${response.status})`;
+      try {
+        const errorData = await response.json();
+        if (errorData?.detail) {
+          if (typeof errorData.detail === 'string') {
+            errorMsg = errorData.detail;
+          } else if (Array.isArray(errorData.detail)) {
+             errorMsg = JSON.stringify(errorData.detail);
+          } else {
+             errorMsg = errorData.detail.message || errorMsg;
+          }
+        }
+      } catch {
+        // Not JSON
+      }
+      throw new Error(errorMsg);
+    }
+
+    const data = await response.json();
+    return { reportId: data.report_id, status: data.status };
   },
 
-  uploadGuestReport: async (_file: File) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const reportId = 'guest_' + Math.random().toString(36).substring(7);
-    
-    mockReports[reportId] = {
-      id: reportId,
-      status: 'processing',
-      uploadDate: new Date().toISOString(),
-      isGuest: true,
+  uploadGuestReport: async (file: File) => {
+    const guestSessionId = 'guest_' + Math.random().toString(36).substring(7);
+    return apiClient.uploadReport(file, guestSessionId);
+  },
+
+  getReportStatus: async (id: string) => {
+    const response = await fetch(`${API_BASE}/reports/${id}`);
+    if (!response.ok) {
+      throw new Error('Failed to get report status');
+    }
+    return response.json();
+  },
+
+  getReportResult: async (id: string): Promise<ReportResult> => {
+    const response = await fetch(`${API_BASE}/reports/${id}/result`);
+    if (!response.ok) {
+      throw new Error('Failed to get report result');
+    }
+    return response.json();
+  },
+
+  getReport: async (id: string): Promise<Report> => {
+    const statusData = await apiClient.getReportStatus(id);
+
+    const report: Report = {
+      id: statusData.id,
+      status: statusData.status as ReportStatus,
+      type: statusData.report_type,
+      uploadDate: statusData.created_at,
+      processingError: statusData.processing_error,
       progress: {
         uploaded: true,
-        identified: false,
-        extracted: false,
-        analyzed: false,
-        explanationGenerated: false,
+        identified: statusData.status !== 'uploaded' && statusData.status !== 'queued',
+        extracted: statusData.status === 'completed',
+        analyzed: statusData.status === 'completed',
+        explanationGenerated: statusData.status === 'completed',
         audioGenerated: false,
-      },
+      }
     };
 
-    apiClient._simulateProcessing(reportId);
-    return { reportId, status: 'processing' };
+    if (statusData.status === 'completed') {
+      try {
+        report.result = await apiClient.getReportResult(id);
+      } catch (err: unknown) {
+        console.error("Could not fetch result for completed report", err);
+      }
+    }
+
+    return report;
   },
 
   getGuestReport: async (id: string): Promise<Report> => {
@@ -92,76 +173,12 @@ export const apiClient = {
   },
 
   downloadReportPDF: async (id: string) => {
+    // Mock for now
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    // Simulate returning a Blob or URL
     return { success: true, url: `/api/mock-download/${id}.pdf` };
   },
 
-  getReport: async (id: string): Promise<Report> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const report = mockReports[id];
-    if (!report) throw new Error('Report not found');
-    return report;
-  },
-
   getRecentReports: async (): Promise<Report[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return Object.values(mockReports).sort((a, b) => 
-      new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
-    );
+    return [];
   },
-
-  // Internal helper to simulate the Celery worker pipeline
-  _simulateProcessing: async (id: string) => {
-    const report = mockReports[id];
-    if (!report || !report.progress) return;
-
-    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-
-    await delay(1000);
-    report.progress.identified = true;
-    report.type = 'CBC';
-    
-    await delay(1500);
-    report.progress.extracted = true;
-
-    await delay(1500);
-    report.progress.analyzed = true;
-
-    await delay(2000);
-    report.progress.explanationGenerated = true;
-
-    await delay(1500);
-    report.progress.audioGenerated = true;
-    report.status = 'completed';
-
-    // Populate with mock CBC data
-    report.summary = "Your Complete Blood Count (CBC) report indicates most values are within normal limits, suggesting overall good health in those areas. However, there is a slight abnormality in your hemoglobin level which you should discuss with your doctor.";
-    report.findings = [
-      {
-        name: "Hemoglobin",
-        result: "11.2 g/dL",
-        referenceRange: "12.0 - 15.5 g/dL",
-        meaning: "Hemoglobin is the protein in red blood cells that carries oxygen.",
-        significance: "Slightly low. This can be associated with fatigue or anemia. Please discuss this finding with your healthcare professional.",
-        isAbnormal: true
-      },
-      {
-        name: "White Blood Cells (WBC)",
-        result: "7.5 x10^9/L",
-        referenceRange: "4.5 - 11.0 x10^9/L",
-        meaning: "White blood cells are part of your immune system and help fight infection.",
-        significance: "Normal. This indicates a healthy immune response.",
-        isAbnormal: false
-      },
-      {
-        name: "Platelets",
-        result: "250 x10^9/L",
-        referenceRange: "150 - 450 x10^9/L",
-        meaning: "Platelets help your blood clot to stop bleeding.",
-        significance: "Normal.",
-        isAbnormal: false
-      }
-    ];
-  }
 };

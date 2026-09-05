@@ -26,7 +26,7 @@ export function AuthModal({ isOpen, onClose, actionDescription }: AuthModalProps
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      login("mock-token-from-modal");
+      login();
     }, 1000);
   };
 
@@ -34,7 +34,7 @@ export function AuthModal({ isOpen, onClose, actionDescription }: AuthModalProps
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      login("mock-token-from-google");
+      login();
     }, 1000);
   };
 

@@ -9,13 +9,13 @@ export function CareAIIntro() {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
-    let timer: NodeJS.Timeout;
     
     // Play on every mount (refresh)
     setShowIntro(true);
     
-    timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setShowIntro(false);
     }, 3500);
     

@@ -5,7 +5,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: () => void;
   logout: () => void;
   requireAuth: (actionDescription: string, callback: () => void) => void;
 }
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [modalActionDescription, setModalActionDescription] = useState("");
   const [pendingCallback, setPendingCallback] = useState<(() => void) | null>(null);
 
-  const login = (token: string) => {
+  const login = () => {
     // In a real app, save token to cookies/localStorage
     setIsAuthenticated(true);
     setIsModalOpen(false);

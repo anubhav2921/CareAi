@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CareAIIntro } from "@/components/careai-intro-dynamic";
 import { AuthProvider } from "@/lib/auth-context";
+import { I18nProvider } from "@/lib/i18n-context";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,9 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <CareAIIntro />
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );
