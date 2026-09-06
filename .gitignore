@@ -57,6 +57,5 @@ __pycache__/
 
 # storage / uploads
 uploads/
-storage/
 backend/.storage/
 backend/test.db
