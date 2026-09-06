@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: careai_user
+      POSTGRES_PASSWORD: careai_password
+      POSTGRES_DB: careai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U careai_user -d careai_db"]
+      
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://careai_user:careai_password@postgres:5432/careai_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_PATH=/app/.storage
+    volumes:
+      - ./backend:/app
+      - backend_storage:/app/.storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./backend
+    environment:
+      - DATABASE_URL=postgresql://careai_user:careai_password@postgres:5432/careai_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_PATH=/app/.storage
+    volumes:
+      - ./backend:/app
+      - backend_storage:/app/.storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.worker.celery_app worker --loglevel=info
+
+volumes:
+  postgres_data:
+  backend_storage:

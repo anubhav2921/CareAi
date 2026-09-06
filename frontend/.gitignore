@@ -2,7 +2,6 @@
 
 # dependencies
 /node_modules
-node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -13,18 +12,13 @@ node_modules/
 
 # testing
 /coverage
-.pytest_cache/
-.coverage
 
 # next.js
 /.next/
 /out/
-.next/
-out/
 
 # production
 /build
-dist/
 
 # misc
 .DS_Store
@@ -35,12 +29,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-*.log
 
-# env files
-.env
-.env.*
-!.env.example
+# env files (can opt-in for committing if needed)
+.env*
 
 # vercel
 .vercel
@@ -48,15 +39,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# python
-venv/
-.venv/
-__pycache__/
-*.pyc
-
-# storage / uploads
-uploads/
-storage/
-backend/.storage/
-backend/test.db
